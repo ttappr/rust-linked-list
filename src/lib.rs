@@ -160,8 +160,8 @@ impl<'a, T> Iterator for LinkedListIterMut<'a, T> {
         if self.0.is_empty() {
             None
         } else {              
-            let ret = Some(&mut self.0.value); 
             self.0  = &mut self.0.next;
+            let ret = Some(&mut self.0.value); 
             ret
         }
     }
