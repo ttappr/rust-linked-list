@@ -107,7 +107,7 @@ impl<T> LinkedList<T> {
             None
         }
     }
-    pub fn insert(&mut self, index: usize, value: T) {
+    pub fn insert2(&mut self, index: usize, value: T) {
         let mut node = Self::from_value(value);
         let mut curr = self;
         let mut i    = 0;
@@ -126,6 +126,24 @@ impl<T> LinkedList<T> {
                 *curr = node;
             }
         } else {
+            *curr = node;
+        }
+    }
+    pub fn insert(&mut self, indx: usize, value: T) {
+        let mut node = LinkedList::from_value(value);
+        let mut prev = None;
+        let mut curr = self;
+        let mut i    = 0;
+        while !curr.is_empty() && i < index {
+            prev = Some(curr);
+            curr = next.next;
+            i   += 1;
+        }
+        if let Some(prev) = prev {
+            node.next = prev.next.take();
+            prev.next = node;
+        } else {
+            node.next = curr.next.take();
             *curr = node;
         }
     }
