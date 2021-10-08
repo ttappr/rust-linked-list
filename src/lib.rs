@@ -57,25 +57,8 @@ impl<T> LinkedList<T> {
         matches!(self, Empty)
     }
     
-    /// Internal method that returns the contents of the current 
-    /// node/LinkedList, replacing it with `Empty`.
-    ///
-    fn take(&mut self) -> LinkedList<T> {
-        take(self)
-    }
-    
-    /// Returns the non-reference value of the LinkedList node. Ownership is 
-    /// transferred to the caller. Internal method.
-    ///
-    fn extract_value(self) -> T {
-        match self {
-            Filled(bx) => bx.value,
-            Empty => panic!("Attempt to extract value 
-                             from Empty Node."),
-        }
-    }
-    
     /// Returns a reference to the value at the given 0-based index in the list.
+    /// An `O(n)` operation.
     ///
     pub fn get(&self, index: usize) -> Option<&T> {
         let mut i   = 0;
@@ -210,6 +193,24 @@ impl<T> LinkedList<T> {
         }
         if !node.is_empty() { Some(node.extract_value()) } 
         else                { None                       }
+    }
+     
+    /// Internal method that returns the contents of the current 
+    /// node/LinkedList, replacing it with `Empty`.
+    ///
+    fn take(&mut self) -> LinkedList<T> {
+        take(self)
+    }
+    
+    /// Returns the non-reference value of the LinkedList node. Ownership is 
+    /// transferred to the caller. Internal method.
+    ///
+    fn extract_value(self) -> T {
+        match self {
+            Filled(bx) => bx.value,
+            Empty => panic!("Attempt to extract value 
+                             from Empty Node."),
+        }
     }
 }
 
