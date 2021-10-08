@@ -1,4 +1,8 @@
 
+//! An example of a singly linked list in Rust. The goal was to implement this
+//! in straightforward Rust without resorting to any hackish solutions like
+//! blocks of `unsafe` just to evade the borrow checker.
+
 use std::iter::FromIterator;
 use std::mem::take;
 use std::ops::{Deref, DerefMut};
@@ -6,7 +10,9 @@ use std::ops::{Index, IndexMut};
 
 use LinkedList::*;
 
-
+/// The node of the list. Holds the values of the list and a field for the
+/// next item.
+///
 #[derive(Debug)]
 pub struct Node<T> {
     value : T,
@@ -14,11 +20,17 @@ pub struct Node<T> {
 }
 
 impl<T> Node<T> {
+    /// Creates a new node with the given value. Private method.
+    ///
     fn new(value: T) -> Self {
         Node { value, next: Empty }
     }
 }
 
+/// Represents a list. Each node is essentially a `LinkedList` linked to 
+/// subsequent lists. `LinkedList` has two variants: `Empty` indicating the
+/// list is empty, and `Filled` when populated.
+///
 #[derive(Debug)]
 pub enum LinkedList<T> {
     Empty,
@@ -26,18 +38,35 @@ pub enum LinkedList<T> {
 }
 
 impl<T> LinkedList<T> {
+    /// Create a new LinkedList.
+    ///
     pub fn new() -> Self {
         Empty
     }
+    
+    /// Create a new LinkedList (or think of it as a node), with the given
+    /// value.
+    ///
     pub fn from_value(value: T) -> Self {
         Filled(Box::new(Node::new(value)))
     }
+    
+    /// Returns `true` if the list is empty.
+    ///
     pub fn is_empty(&self) -> bool {
         matches!(self, Empty)
     }
+    
+    /// Internal method that returns the contents of the current 
+    /// node/LinkedList, replacing it with `Empty`.
+    ///
     fn take(&mut self) -> LinkedList<T> {
         take(self)
     }
+    
+    /// Returns the non-reference value of the LinkedList node. Ownership is 
+    /// transferred to the caller. Internal method.
+    ///
     fn extract_value(self) -> T {
         match self {
             Filled(bx) => bx.value,
@@ -45,6 +74,9 @@ impl<T> LinkedList<T> {
                              from Empty Node."),
         }
     }
+    
+    /// Returns a reference to the value at the given 0-based index in the list.
+    ///
     pub fn get(&self, index: usize) -> Option<&T> {
         let mut i   = 0;
         let mut ret = None;
@@ -57,6 +89,10 @@ impl<T> LinkedList<T> {
         }
         ret
     }
+    
+    /// Returns a mutable reference to the value held by the LinkedList node at
+    /// the given index.
+    ///
     pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         let mut i    = 0;
         let mut curr = self;
@@ -70,12 +106,18 @@ impl<T> LinkedList<T> {
             None
         }
     }
+    
+    /// Pushes the given value at the front of the list. An `O(1)` operation.
+    ///
     pub fn push_front(&mut self, value: T) {
         let mut node  = LinkedList::from_value(value);
         let     front = take(self);
         node.next     = front;
         *self         = node;
     }
+    
+    /// Pushes the given value onto the end of the list. An `O(n)` operation.
+    ///
     pub fn push_back(&mut self, value: T) {
         let mut curr = self;
         while !curr.is_empty() {
@@ -83,6 +125,10 @@ impl<T> LinkedList<T> {
         }
         *curr = Self::from_value(value);
     }
+    
+    /// Removes the first LinkedList node from the front of the list. If there
+    /// isn't one, `None` is returned. An `O(1)` operation.
+    ///
     pub fn pop_front(&mut self) -> Option<T> {
         let mut ret = None;
         if !self.is_empty() {
@@ -96,6 +142,11 @@ impl<T> LinkedList<T> {
         }
         ret
     }
+    
+    /// Removes the last item in the LinkedList if present. Returns the value
+    /// of the item as `Some(value)`, or if the list was empty, `None` is
+    /// returned. An `O(n)` operation.
+    ///
     pub fn pop_back(&mut self) -> Option<T> {
         let mut ret = None;
         if !self.is_empty() {
@@ -109,6 +160,11 @@ impl<T> LinkedList<T> {
         }
         ret
     }
+    
+    /// Inserts the given value into the list at the position given by `index`.
+    /// If the index is greater than the length of the list, it is placed at
+    /// the end of the list. An `O(n)` operation.
+    ///
     pub fn insert(&mut self, index: usize, value: T) {
         let mut node = LinkedList::from_value(value);
         if self.is_empty() || index == 0 {
@@ -127,6 +183,12 @@ impl<T> LinkedList<T> {
             prev.next = node;
         }
     }
+    
+    /// Removes the value at the given `index` and returns it. If one wasn't
+    /// at the given index, the last item in the list is returned as 
+    /// `Some(value)`. If the list is empty, then `None` is returned.
+    /// An `O(n)` operation.
+    ///
     pub fn remove(&mut self, index: usize) -> Option<T> {
         let mut node = Empty;
         if self.is_empty() || index == 0 {
@@ -151,10 +213,17 @@ impl<T> LinkedList<T> {
     }
 }
 
+/// Represents a list iterator. Holds a reference to a linked list for 
+/// iteration over its elements.
+///
 pub struct LinkedListIter<'a, T>(&'a LinkedList<T>);
 
 impl<'a, T> Iterator for LinkedListIter<'a, T> {
     type Item = &'a T;
+    
+    /// Returns the next element in the list if there is one as `Some(value)`.
+    /// Returns `None` when the end of the list is reached.
+    ///
     fn next(&mut self) -> Option<Self::Item> {
         if self.0.is_empty() {
             None
@@ -166,16 +235,27 @@ impl<'a, T> Iterator for LinkedListIter<'a, T> {
     }
 }
 
-
+/// Trait that facilitates the creation of list iterators via `.into_iter()`.
+///
 impl<'a, T> IntoIterator for &'a LinkedList<T> {
     type Item     = &'a T;
     type IntoIter = LinkedListIter<'a, T>;
+    
+    /// Returns an iterator to the list reference. `self` should be a reference
+    /// to a `LinkedList`.
+    ///
     fn into_iter(self) -> Self::IntoIter {
         LinkedListIter(self)
     }
 }
 
+/// Trait that facilitates the creation of a list using the `.collect()` method
+/// provided by other iterators.
+///
 impl<T> FromIterator<T> for LinkedList<T> {
+
+    /// Returns a new list containing the elements the iterator provides.
+    ///
     fn from_iter<I>(iter: I) -> Self 
     where
         I: IntoIterator<Item=T>,
@@ -188,17 +268,29 @@ impl<T> FromIterator<T> for LinkedList<T> {
     }
 }
 
+
+/// Trait that allows an iterator to be converted to a list using `.from()`.
+///
 impl<T, I> From<I> for LinkedList<T> 
 where
     I: Iterator<Item=T>,
 {
+    /// Returns a list instance from the provided iterator.
+    ///
     fn from(iter: I) -> Self {
         iter.collect()
     }
 }
 
+/// Trait that allows other code to transparently access the `Node` instance 
+/// within a `LinkedList`.
+///
 impl<T> Deref for LinkedList<T> {
     type Target = Node<T>;
+    
+    /// Method called to resolve a list reference to a `Node`. Will panic if
+    /// the list is `Empty`.
+    ///
     fn deref(&self) -> &Self::Target {
         match self {
             Filled(node) => node,
@@ -207,7 +299,14 @@ impl<T> Deref for LinkedList<T> {
         }
     }
 }
+
+/// Mutable dereference trait that provides transparent access to the `Node`
+/// within a `LinkedList`.
+///
 impl<T> DerefMut for LinkedList<T> {
+
+    /// Invoked to resolve a list to its internal node.
+    ///
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
             Filled(node) => node,
@@ -217,21 +316,39 @@ impl<T> DerefMut for LinkedList<T> {
     }
 }
 
+/// Provides a default value for a `LinkedList`. This trait comes into play
+/// when operations like `take()` are executed on an object.
+///
 impl<T> Default for LinkedList<T> {
+
+    /// Returns the default value for a list, which is `Empty`.
+    ///
     fn default() -> Self {
         Empty
     }
 }
 
+/// Trait that gives the lists support for array indexing syntax.
+///
 impl<T> Index<usize> for LinkedList<T> {
     type Output = T;
+    
+    /// Invoked hwere array indexing is used within source code elsewhere.
+    ///
     fn index(&self, i: usize) -> &Self::Output {
         self.get(i)
             .unwrap_or_else(|| panic!("Index value {} 
                                        out of range.", i))
     }
 }
+
+/// Trait that gives lists array indexing support to access mutable references
+/// to list items.
+///
 impl<T> IndexMut<usize> for LinkedList<T> {
+
+    /// Returns a mutable reference to the value at the given index.
+    ///
     fn index_mut(&mut self, i: usize) -> &mut Self::Output {
         self.get_mut(i)
             .unwrap_or_else(|| panic!("Index value {}
