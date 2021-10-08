@@ -25,7 +25,7 @@ assert_eq!(list[1], &2);
 
 ```
 It's a good start, and has many features, but it's nowhere as complete as objects in `std::collections`. 
-Feel free to make extensions. Feel free to modify and extend it if you find it useful.
+Feel free to modify and extend it if you find it useful.
 
 The approach that I found simplifies implementing node based data structures in Rust ivolves a tight relationship 
 between the nodes of the structure and the structure itself, along with the `Deref` and `DerefMut` traits.
