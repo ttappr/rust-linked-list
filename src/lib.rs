@@ -71,10 +71,10 @@ impl<T> LinkedList<T> {
         }
     }
     pub fn push_front(&mut self, value: T) {
-        let mut node  = Box::new(Node::new(value));
+        let mut node  = LinkedList::from_value(value);
         let     front = take(self);
         node.next     = front;
-        *self         = Filled(node);
+        *self         = node;
     }
     pub fn push_back(&mut self, value: T) {
         let mut curr = self;
@@ -97,80 +97,57 @@ impl<T> LinkedList<T> {
         ret
     }
     pub fn pop_back(&mut self) -> Option<T> {
-        let mut curr = self;
-        while !curr.is_empty() && !curr.next.is_empty() { 
-            curr = &mut curr.next; 
-        }
-        if !curr.is_empty() {
-             Some(curr.take().extract_value())
-        } else {
-            None
-        }
-    }
-    pub fn insert2(&mut self, index: usize, value: T) {
-        let mut node = Self::from_value(value);
-        let mut curr = self;
-        let mut i    = 0;
-        while !curr.is_empty() && i + 1 < index {
-            curr = &mut curr.next;
-            i   += 1;
-        }
-        if !curr.is_empty() {
-            if index != 0 {
-                if !curr.next.is_empty() {
-                    node.next = curr.next.take();
-                }
-                curr.next = node;
-            } else {
-                node.next = curr.take();
-                *curr = node;
+        let mut ret = None;
+        if !self.is_empty() {
+            let mut curr = self;
+            while !curr.next.is_empty() { 
+                curr = &mut curr.next; 
             }
-        } else {
-            *curr = node;
-        }
-    }
-    pub fn insert(&mut self, indx: usize, value: T) {
-        let mut node = LinkedList::from_value(value);
-        let mut prev = None;
-        let mut curr = self;
-        let mut i    = 0;
-        while !curr.is_empty() && i < index {
-            prev = Some(curr);
-            curr = next.next;
-            i   += 1;
-        }
-        if let Some(prev) = prev {
-            node.next = prev.next.take();
-            prev.next = node;
-        } else {
-            node.next = curr.next.take();
-            *curr = node;
-        }
-    }
-    pub fn remove(&mut self, index: usize) -> Option<T> {
-        let mut ret  = None;
-        let mut curr = self;
-        let mut i    = 0;
-        while !curr.is_empty() && i + 1 < index {
-            curr = &mut curr.next;
-            i   += 1;
-        }
-        if !curr.is_empty() {
-            if index != 0 {
-                if !curr.next.is_empty() {
-                    let mut next = curr.next.take();
-                    if !next.next.is_empty() {
-                        curr.next = next.next.take();
-                    }
-                    ret = Some(next.extract_value());
-                }
-            } else {
-                let next = curr.next.take();                
-                ret      = Some(curr.take().extract_value());
-                *curr    = next;
+            if !curr.is_empty() {
+                 ret = Some(curr.take().extract_value());
             }
         }
         ret
+    }
+    pub fn insert(&mut self, index: usize, value: T) {
+        let mut node = LinkedList::from_value(value);
+        if self.is_empty() || index == 0 {
+            if !self.is_empty() {
+                node.next = self.take();
+            }
+            *self = node;
+        } else {
+            let mut prev = self;
+            let mut i    = 1;
+            while !prev.next.is_empty() && i < index {
+                prev = &mut prev.next;
+                i   += 1;
+            }
+            node.next = prev.next.take();
+            prev.next = node;
+        }
+    }
+    pub fn remove(&mut self, index: usize) -> Option<T> {
+        let mut node = Empty;
+        if self.is_empty() || index == 0 {
+            if !self.is_empty() {
+                node  = self.take();
+                *self = node.next.take();
+            }
+        } else {
+            let mut prev = self;
+            let mut i    = 1;
+            while !prev.next.is_empty() && i < index {
+                prev = &mut prev.next;
+                i   += 1;
+            }
+            if !prev.next.is_empty() {
+                node      = prev.next.take();
+                prev.next = node.next.take();
+            }
+        }
+        if !node.is_empty() { Some(node.extract_value()) } 
+        else                { None                       }
     }
 }
 
