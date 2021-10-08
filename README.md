@@ -12,7 +12,7 @@ let list = LinkedList::from(0..5);
 It's a good start, and has many features, but it's nowhere as complete as objects in `std::collections`. 
 Feel free to make extensions. Feel free to modify and extend it if you find it useful.
 
-The approach that I found simplifies implementing node based data structures ivolves a tight relationship 
+The approach that I found simplifies implementing node based data structures in Rust ivolves a tight relationship 
 between the nodes of the structure and the structure itself, along with the `Deref` and `DerefMut` traits.
 Each node of the linked list is both a `Node` and a `LinkedList`. The variant `Empty` represents an empty list, 
 and the `Filled` variant is a list with nodes.
